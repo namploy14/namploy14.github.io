@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ถอดรหัส Deadlock: เรียนรู้เรื่องวงจรอับในระบบปฏิบัติการ</title>
+    <meta name="description" content="สื่อการสอนและเครื่องมือจำลองเชิงโต้ตอบเรื่อง วงจรอับ (Deadlock) ของระบบปฏิบัติการ พร้อมเกมการสอนแสนสนุก">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header>
+        <div class="header-container">
+            <span class="header-badge">ระบบปฏิบัติการ (Operating System)</span>
+            <h1 id="page-main-title">ถอดรหัส Deadlock: วงจรอับของระบบปฏิบัติการ</h1>
+            <p>เรียนรู้สาเหตุ เงื่อนไขการเกิด และวิธีแก้ไขปัญหาคอขวดที่ใหญ่ที่สุดในโลกคอมพิวเตอร์ผ่านแผนภาพโต้ตอบและเกมการสอนสุดท้าทาย</p>
+        </div>
+    </header>
+
+    <!-- Sticky Navigation -->
+    <nav class="nav-menu">
+        <div class="nav-menu-inner">
+            <a href="#objectives" class="nav-btn active" id="nav-btn-obj">วัตถุประสงค์</a>
+            <a href="#theory" class="nav-btn" id="nav-btn-theory">บทเรียนเรื่อง Deadlock</a>
+            <a href="#visualizer" class="nav-btn" id="nav-btn-viz">แผนภาพจำลอง RAG</a>
+            <a href="#game" class="nav-btn" id="nav-btn-game">เกมจัดสรรทรัพยากร</a>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="container">
+
+        <!-- Section: Objectives -->
+        <section id="objectives">
+            <div class="section-title">
+                <h2>วัตถุประสงค์การเรียนรู้</h2>
+            </div>
+            <div class="objectives-grid">
+                <!-- Obj 1 -->
+                <div class="card objective-card">
+                    <div class="objective-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                    </div>
+                    <div class="objective-content">
+                        <h3>1. เข้าใจกลไกวงจรอับ</h3>
+                        <p>สามารถอธิบายความหมายของ Deadlock และการเปรียบเทียบในชีวิตจริงได้อย่างถูกต้องชัดเจน</p>
+                    </div>
+                </div>
+                <!-- Obj 2 -->
+                <div class="card objective-card">
+                    <div class="objective-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7"/></svg>
+                    </div>
+                    <div class="objective-content">
+                        <h3>2. วิเคราะห์เงื่อนไขทั้ง 4</h3>
+                        <p>สามารถจำแนกและระบุเงื่อนไข 4 ประการของ Coffman ที่ประกอบกันจนเกิดสภาวะวงจรอับได้</p>
+                    </div>
+                </div>
+                <!-- Obj 3 -->
+                <div class="card objective-card">
+                    <div class="objective-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m10 15 5-3-5-3v6z"/></svg>
+                    </div>
+                    <div class="objective-content">
+                        <h3>3. แก้ไขและหลีกเลี่ยง</h3>
+                        <p>เรียนรู้อัลกอริทึมจัดการ Deadlock เช่น Banker's Algorithm และแก้ปัญหาผ่านระดับด่านในเกมการสอน</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Theory / Content -->
+        <section id="theory">
+            <div class="section-title">
+                <h2>บทเรียนเรื่อง Deadlock</h2>
+            </div>
+            
+            <!-- What is Deadlock? -->
+            <div class="card content-intro-card">
+                <div class="content-intro-desc">
+                    <h3>Deadlock (วงจรอับ) คืออะไร?</h3>
+                    <p>ในระบบปฏิบัติการ <strong>Deadlock</strong> คือสถานการณ์ที่ **กลุ่มของกระบวนการ (Processes) ต่างต้องหยุดชะงักอย่างถาวร** เนื่องจากต่างฝ่ายต่างถือครองทรัพยากร (Resources) ที่อีกฝ่ายต้องการ และไม่มีกระบวนการใดสามารถทำงานต่อจนเสร็จเพื่อปล่อยทรัพยากรออกมาได้</p>
+                    <p><strong>ตัวอย่างเปรียบเทียบ:</strong> ลองจินตนาการถึงรถยนต์ 4 คันวิ่งเข้ามาจอดประจันหน้ากันที่ทางแยกสี่ทิศทาง (Gridlock) รถแต่ละคันจำเป็นต้องก้าวไปข้างหน้าเพื่อเปิดทางให้คันอื่น แต่ไม่มีคันไหนถอยหลังได้ ทุกคนจึงติดอยู่ตรงนั้นตลอดกาล!</p>
+                </div>
+                <div class="content-illustration">
+                    <!-- SVG Gridlock Illustration -->
+                    <svg width="240" height="240" viewBox="0 0 200 200" style="background-color: #EADCD0; border-radius: 8px;">
+                        <!-- Roads -->
+                        <rect x="75" y="0" width="50" height="200" fill="#FFFDF0" />
+                        <rect x="0" y="75" width="200" height="50" fill="#FFFDF0" />
+                        <!-- Intersection center -->
+                        <rect x="75" y="75" width="50" height="50" fill="#FFEEDD" />
+                        <!-- Yellow divider lines -->
+                        <line x1="100" y1="0" x2="100" y2="75" stroke="#D4A373" stroke-dasharray="5,5" stroke-width="2" />
+                        <line x1="100" y1="125" x2="100" y2="200" stroke="#D4A373" stroke-dasharray="5,5" stroke-width="2" />
+                        <line x1="0" y1="100" x2="75" y2="100" stroke="#D4A373" stroke-dasharray="5,5" stroke-width="2" />
+                        <line x1="125" y1="100" x2="200" y2="100" stroke="#D4A373" stroke-dasharray="5,5" stroke-width="2" />
+                        
+                        <!-- Cars (styled box arrows pointing into center) -->
+                        <!-- Car Top (going south, stuck) -->
+                        <g transform="translate(80, 45)">
+                            <rect width="16" height="28" rx="4" fill="#E76F51" />
+                            <circle cx="4" cy="6" r="2" fill="#FFF" />
+                            <circle cx="12" cy="6" r="2" fill="#FFF" />
+                            <path d="M8 32 l-4 -6 h8 z" fill="#E63946" />
+                        </g>
+                        <!-- Car Right (going west, stuck) -->
+                        <g transform="translate(127, 80)">
+                            <rect width="28" height="16" rx="4" fill="#2A9D8F" />
+                            <circle cx="6" cy="4" r="2" fill="#FFF" />
+                            <circle cx="6" cy="12" r="2" fill="#FFF" />
+                            <path d="M-4 8 l6 -4 v8 z" fill="#E63946" />
+                        </g>
+                        <!-- Car Bottom (going north, stuck) -->
+                        <g transform="translate(104, 127)">
+                            <rect width="16" height="28" rx="4" fill="#8C6239" />
+                            <circle cx="4" cy="22" r="2" fill="#FFF" />
+                            <circle cx="12" cy="22" r="2" fill="#FFF" />
+                            <path d="M8 -4 l-4 6 h8 z" fill="#E63946" />
+                        </g>
+                        <!-- Car Left (going east, stuck) -->
+                        <g transform="translate(45, 104)">
+                            <rect width="28" height="16" rx="4" fill="#F4A261" />
+                            <circle cx="22" cy="4" r="2" fill="#FFF" />
+                            <circle cx="22" cy="12" r="2" fill="#FFF" />
+                            <path d="M32 8 l-6 -4 v8 z" fill="#E63946" />
+                        </g>
+                        <text x="100" y="105" font-family="'Kanit', sans-serif" font-size="12" font-weight="bold" fill="#E63946" text-anchor="middle">DEADLOCK!</text>
+                    </svg>
+                    <span style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.5rem; font-weight: 600;">เปรียบเทียบ Deadlock กับแยกจราจรสี่ทิศทาง</span>
+                </div>
+            </div>
+
+            <!-- 4 Coffman Conditions -->
+            <h3 style="text-align: center; margin-bottom: 1.5rem; font-size: 1.6rem; color: var(--primary);">เงื่อนไข 4 ประการที่ทำให้เกิดวงจรอับ (Coffman Conditions)</h3>
+            <p style="text-align: center; max-width: 700px; margin: 0 auto 2.5rem; color: var(--text-muted);">เดดล็อกจะเกิดขึ้นได้ก็ต่อเมื่อ **เงื่อนไขทั้ง 4 ข้อนี้เกิดขึ้นพร้อมกัน** หากเราทำลายเงื่อนไขข้อใดข้อหนึ่งลงได้ สภาวะเดดล็อกจะไม่เกิดขึ้น</p>
+            
+            <div class="coffman-grid">
+                <!-- Condition 1 -->
+                <div class="card coffman-card" id="coff-card-1">
+                    <span class="coffman-num">01</span>
+                    <h3>Mutual Exclusion</h3>
+                    <p style="font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">การใช้งานทรัพยากรแบบผูกขาด</p>
+                    <p>ทรัพยากรในระบบนั้นไม่สามารถแบ่งกันใช้งานได้ (Non-shareable) เช่น เครื่องพิมพ์ หรือไดรฟ์เขียนซีดี โดยสามารถรองรับการใช้จากหน่วยประมวลผลได้เพียงครั้งละหนึ่งตัวเท่านั้น</p>
+                </div>
+                <!-- Condition 2 -->
+                <div class="card coffman-card" id="coff-card-2">
+                    <span class="coffman-num">02</span>
+                    <h3>Hold and Wait</h3>
+                    <p style="font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">การถือครองและรอคอย</p>
+                    <p>กระบวนการที่ถือครองทรัพยากรหนึ่งไว้อยู่แล้ว ยังคงสามารถยื่นขอทรัพยากรตัวอื่นเพิ่มเติมได้ และเลือกที่จะ "ถือค้างไว้" ไม่ยอมปล่อยทรัพยากรเดิมระหว่างที่รอทรัพยากรใหม่</p>
+                </div>
+                <!-- Condition 3 -->
+                <div class="card coffman-card" id="coff-card-3">
+                    <span class="coffman-num">03</span>
+                    <h3>No Preemption</h3>
+                    <p style="font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">การไม่สามารถแทรกแซง/แย่งชิงได้</p>
+                    <p>ทรัพยากรที่ถูกถือครองอยู่จะไม่สามารถถูกแย่งชิง (Forcefully released) โดยระบบปฏิบัติการหรือกระบวนการอื่นได้ จนกว่ากระบวนการที่ถือครองจะสมัครใจปล่อยออกมาเองเมื่อเสร็จงาน</p>
+                </div>
+                <!-- Condition 4 -->
+                <div class="card coffman-card" id="coff-card-4">
+                    <span class="coffman-num">04</span>
+                    <h3>Circular Wait</h3>
+                    <p style="font-weight: 600; color: var(--text-muted); margin-bottom: 0.5rem;">การรอคอยเป็นวงกลม</p>
+                    <p>มีกลุ่มของกระบวนการรอคอยทรัพยากรต่อกันเป็นงูกินหาง เช่น P0 รอทรัพยากรที่ P1 ถือครอง, P1 รอทรัพยากรที่ P2 ถือครอง, และ P2 ย้อนกลับมารอทรัพยากรที่ P0 ถือครองอยู่</p>
+                </div>
+            </div>
+
+            <!-- Strategies Accordion -->
+            <h3 style="text-align: center; margin-bottom: 2rem; font-size: 1.5rem; color: var(--primary);">แนวทางการจัดการกับ Deadlock ของระบบปฏิบัติการ</h3>
+            <div class="strategies-container">
+                <!-- Strategy 1 -->
+                <div class="strategy-row" id="strat-row-1">
+                    <div class="strategy-header">
+                        <span>1. การป้องกัน (Deadlock Prevention)</span>
+                        <div>
+                            <span class="strategy-badge">ยาก / สิ้นเปลือง</span>
+                            <span class="strategy-icon">▼</span>
+                        </div>
+                    </div>
+                    <div class="strategy-content">
+                        <p>เป็นการขจัดเงื่อนไขใดเงื่อนไขหนึ่งใน 4 ข้อข้างต้นอย่างเข้มงวดเพื่อไม่ให้เกิด Deadlock ขึ้นได้เลย เช่น:</p>
+                        <ul>
+                            <li><strong>ทำลาย Hold and Wait:</strong> กำหนดให้กระบวนการต้องขอทรัพยากรทั้งหมดที่ต้องการใช้งานตั้งแต่เริ่มงาน หากได้ไม่ครบ จะไม่ได้ถือครองทรัพยากรใดเลย</li>
+                            <li><strong>ทำลาย No Preemption:</strong> หากกระบวนการขอทรัพยากรเพิ่มแล้วไม่ได้ ระบบจะบังคับให้กระบวนการนั้นปล่อยทรัพยากรทั้งหมดที่ถือครองอยู่กลับสู่ส่วนกลาง</li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- Strategy 2 -->
+                <div class="strategy-row" id="strat-row-2">
+                    <div class="strategy-header">
+                        <span>2. การหลีกเลี่ยง (Deadlock Avoidance)</span>
+                        <div>
+                            <span class="strategy-badge">ประสิทธิภาพสูง</span>
+                            <span class="strategy-icon">▼</span>
+                        </div>
+                    </div>
+                    <div class="strategy-content">
+                        <p>ระบบปฏิบัติการจะคอยตรวจสอบความต้องการใช้ทรัพยากรสูงสุดล่วงหน้า เพื่อพิจารณาว่าการอนุมัติทรัพยากรแต่ละครั้งจะพาเข้าระบบสู่ <strong>"สถานะไม่ปลอดภัย" (Unsafe State)</strong> ที่อาจนำไปสู่ Deadlock หรือไม่</p>
+                        <p>อัลกอริทึมที่นิยมใช้คือ <strong>Banker's Algorithm (อัลกอริทึมของนายธนาคาร)</strong> ซึ่งเปรียบเทียบว่า OS เป็นนายธนาคารที่ต้องบริหารจัดการเงินสำรอง (ทรัพยากร) ให้ลูกหนี้ (กระบวนการ) กู้ยืม โดยต้องมีหลักประกันว่าจะมีลำดับการทำงานที่ทุกกระบวนการสามารถจบงานได้สำเร็จ (Safe Sequence)</p>
+                    </div>
+                </div>
+                <!-- Strategy 3 -->
+                <div class="strategy-row" id="strat-row-3">
+                    <div class="strategy-header">
+                        <span>3. การตรวจจับและฟื้นฟู (Detection & Recovery)</span>
+                        <div>
+                            <span class="strategy-badge">ใช้จริงในบางระบบ</span>
+                            <span class="strategy-icon">▼</span>
+                        </div>
+                    </div>
+                    <div class="strategy-content">
+                        <p>ปล่อยให้เดดล็อกเกิดขึ้นได้ แต่จะรันเครื่องมือตรวจจับเป็นระยะ (เช่น ใช้กราฟความสัมพันธ์ Resource Allocation Graph หาจุดวงกลม) เมื่อพบระบบเกิด Deadlock จะทำการฟื้นฟูระบบโดย:</p>
+                        <ul>
+                            <li><strong>Process Termination:</strong> สั่งยกเลิกกระบวนการ (Kill Process) ทั้งหมดในวงจร หรือทยอยยกเลิกทีละกระบวนการจนกว่าวงจรจะขาด</li>
+                            <li><strong>Resource Preemption:</strong> แย่งชิงทรัพยากรคืนมาจากกระบวนการหนึ่งชั่วคราวเพื่อส่งให้กระบวนการอื่นทำงานให้เสร็จก่อน</li>
+                        </ul>
+                    </div>
+                </div>
+                <!-- Strategy 4 -->
+                <div class="strategy-row" id="strat-row-4">
+                    <div class="strategy-header">
+                        <span>4. การเพิกเฉย (Deadlock Ignorance / Ostrich Algorithm)</span>
+                        <div>
+                            <span class="strategy-badge">พบมากที่สุด</span>
+                            <span class="strategy-icon">▼</span>
+                        </div>
+                    </div>
+                    <div class="strategy-content">
+                        <p><strong>Ostrich Algorithm (อัลกอริทึมฝังหัวในดินแบบนกกระจอกเทศ):</strong> คือการแกล้งทำเป็นว่าไม่มีปัญหานี้เกิดขึ้นเลย เนื่องจากในความเป็นจริงโอกาสเกิด Deadlock นั้นน้อยมาก และค่าใช้จ่ายในการป้องกันหรือตรวจจับตลอดเวลานั้นสูงเกินไป</p>
+                        <p>ระบบปฏิบัติการยอดนิยมอย่าง **Windows, Linux และ macOS** จึงใช้วิธีนี้ โดยหากเกิด Deadlock ขึ้นจริงๆ ก็จะปล่อยให้เป็นหน้าที่ของผู้ใช้ในการรีสตาร์ทกระบวนการหรือรีบูตเครื่องคอมพิวเตอร์ใหม่</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: RAG Visualizer -->
+        <section id="visualizer">
+            <div class="section-title">
+                <h2>แผนภาพจำลอง RAG (Resource Allocation Graph)</h2>
+            </div>
+            
+            <p style="text-align: center; max-width: 800px; margin: -1.5rem auto 2.5rem; color: var(--text-muted);">
+                สร้างแบบจำลองความสัมพันธ์เพื่อวิเคราะห์เดดล็อกด้วยตนเอง โดย **Process (กระบวนการ)** จะแทนด้วยวงกลมสีส้ม และ **Resource (ทรัพยากร)** จะแทนด้วยสี่เหลี่ยมสีเขียว (จุดด้านในแทนจำนวนทรัพยากรที่มี)
+            </p>
+
+            <div class="rag-layout">
+                <!-- Controls Sidebar -->
+                <div class="rag-controls">
+                    <!-- Config Node -->
+                    <div class="control-group">
+                        <div class="control-title">
+                            <span>1. เพิ่มโหนด (Node)</span>
+                            <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">สร้างวงกลม/สี่เหลี่ยม</span>
+                        </div>
+                        <div class="input-row">
+                            <input type="text" id="nodeName" placeholder="ชื่อโหนด เช่น P1, R1" maxlength="5">
+                            <select id="nodeType">
+                                <option value="process">Process (วงกลม)</option>
+                                <option value="resource">Resource (สี่เหลี่ยม)</option>
+                            </select>
+                        </div>
+                        <div class="input-row" id="resourceInstanceRow" style="display: none;">
+                            <span style="font-size: 0.85rem; display: flex; align-items: center;">จำนวนตั๋วทรัพยากร:</span>
+                            <input type="number" id="resourceInstances" value="1" min="1" max="4" style="width: 70px;">
+                        </div>
+                        <button class="btn btn-primary" id="btnAddNode" style="width: 100%;">เพิ่มโหนดลงแผนภาพ</button>
+                        <div class="node-list" id="nodeListContainer">
+                            <!-- Nodes chips go here -->
+                        </div>
+                    </div>
+
+                    <!-- Config Edge -->
+                    <div class="control-group">
+                        <div class="control-title">
+                            <span>2. เชื่อมโยงเส้น (Edge)</span>
+                            <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">สร้างความสัมพันธ์</span>
+                        </div>
+                        <div class="input-row">
+                            <select id="edgeFrom" placeholder="จากโหนด"></select>
+                            <span style="display: flex; align-items: center; justify-content: center; font-size: 0.8rem; color: var(--text-muted);">ชี้ไป</span>
+                            <select id="edgeTo" placeholder="ไปยังโหนด"></select>
+                        </div>
+                        <p style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.5rem; font-style: italic;">
+                            * ทรัพยากร ชี้ไป กระบวนการ = ถือครอง (Allocation)<br>
+                            * กระบวนการ ชี้ไป ทรัพยากร = รอคอย (Request)
+                        </p>
+                        <button class="btn btn-accent" id="btnAddEdge" style="width: 100%;">เชื่อมโยงเส้นหัวลูกศร</button>
+                        <div class="edge-list" id="edgeListContainer">
+                            <!-- Edges chips go here -->
+                        </div>
+                    </div>
+
+                    <!-- Presets & Actions -->
+                    <div class="control-group">
+                        <div class="control-title">
+                            <span>3. คลังตัวอย่างแผนภาพ</span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <button class="btn btn-outline" id="btnPresetDeadlock">ตัวอย่างที่ 1: เกิดเดดล็อกแบบวนลูป</button>
+                            <button class="btn btn-outline" id="btnPresetSafe">ตัวอย่างที่ 2: ปลอดภัยไม่มีเดดล็อก</button>
+                            <button class="btn btn-outline" id="btnPresetLoopNoDeadlock">ตัวอย่างที่ 3: มีลูปแต่ไม่ตาย (หลายคลาส)</button>
+                            <button class="btn btn-danger" id="btnClearGraph" style="margin-top: 0.5rem;">ล้างแผนภาพทั้งหมด</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Canvas Board -->
+                <div class="rag-canvas-container">
+                    <div class="canvas-toolbar">
+                        <span>พื้นที่วาด Resource Allocation Graph</span>
+                        <div class="canvas-legend">
+                            <div class="legend-item"><div class="legend-color legend-process"></div><span>Process</span></div>
+                            <div class="legend-item"><div class="legend-color legend-resource"></div><span>Resource</span></div>
+                        </div>
+                    </div>
+                    <div class="rag-canvas-wrapper">
+                        <canvas id="ragCanvas"></canvas>
+                        <!-- Status Alert Overlay -->
+                        <div class="status-overlay" id="ragStatusOverlay">
+                            <div class="status-indicator"></div>
+                            <span class="status-text" id="ragStatusText">กำลังเริ่มต้นระบบ...</span>
+                            <span class="status-desc" id="ragStatusDesc">สามารถคลิกลากโหนดเพื่อขยับตำแหน่งได้</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section: Game -->
+        <section id="game">
+            <div class="section-title">
+                <h2>เกมจัดสรรทรัพยากร: OS Resource Commander</h2>
+            </div>
+            
+            <div class="card game-card">
+                <!-- Game Header -->
+                <div class="game-header-bar">
+                    <div class="game-title-info">
+                        <div class="game-logo">⚙️</div>
+                        <div>
+                            <h3 style="margin-bottom: 0.1rem; color: var(--primary);">ปฏิบัติการทลายวายร้ายเดดล็อก</h3>
+                            <span style="font-size: 0.85rem; color: var(--text-muted);">จำลองการเป็นตัวจัดการทรัพยากรในระบบปฏิบัติการ</span>
+                        </div>
+                    </div>
+                    
+                    <div class="game-stats">
+                        <div class="stat-box">
+                            <span class="stat-label">ด่าน:</span>
+                            <span class="stat-val" id="game-stage">1 / 3</span>
+                        </div>
+                        <div class="stat-box">
+                            <span class="stat-label">แต้มปฏิบัติการ:</span>
+                            <span class="stat-val" id="game-score">0</span>
+                        </div>
+                        <button class="sound-toggle" id="btnSoundToggle" title="เปิด/ปิดเสียงสังเคราะห์">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stage Tab Selection -->
+                <div class="level-tabs">
+                    <div class="level-tab active" id="tab-lvl-1" data-lvl="1">ด่าน 1: ทลายวงจรอับ</div>
+                    <div class="level-tab locked" id="tab-lvl-2" data-lvl="2">ด่าน 2: ธนาคารจัดการปลอดภัย</div>
+                    <div class="level-tab locked" id="tab-lvl-3" data-lvl="3">ด่าน 3: ปรัชญาไร้คนอดตาย</div>
+                </div>
+
+                <!-- Game Container Panels -->
+                <div class="game-content-panel" id="gamePanel">
+                    
+                    <!-- Level 1 Panel (Break Loop) -->
+                    <div class="game-level-view" id="lvl-1-view">
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: var(--primary);">ภารกิจ:</strong> ระบบตรวจพบวงจรอับ (Deadlock) ทำให้อุปกรณ์ของคุณค้าง! หน้าที่ของคุณคือเลือก **ยกเลิกกระบวนการ (Abort Process)** 1 ตัว เพื่อทลายความสัมพันธ์แบบวงกลม โดยมี **แต้มปฏิบัติการที่ใช้ทำลายกระบวนการ** แตกต่างกันไปตามลำดับความสำคัญ ยิ่งเลือกตัวที่ประหยัดพลังงานที่สุด คะแนนผ่านด่านจะยิ่งสูง!
+                        </div>
+                        
+                        <div class="l1-layout">
+                            <!-- Visualizer SVG or Mini Canvas -->
+                            <div class="l1-canvas-container">
+                                <svg class="l1-nodes-svg" id="l1-svg">
+                                    <!-- Dynamic SVG elements for deadlock loop nodes will be rendered here -->
+                                </svg>
+                            </div>
+                            <!-- Selection Info Sidebar -->
+                            <div class="l1-sidebar">
+                                <div class="sidebar-title">เลือกยกเลิกกระบวนการ</div>
+                                <div id="l1-selection-details">
+                                    <p style="color: var(--text-muted); font-size: 0.9rem;">คลิกเลือกโหนดกระบวนการ (สีส้ม) ในกล่องแผนภาพเพื่อตรวจเช็คข้อมูลผลกระทบ...</p>
+                                </div>
+                                <div class="cost-legend">
+                                    <div class="cost-legend-item">
+                                        <span>กระบวนการ P1:</span>
+                                        <strong>ความสำคัญสูง (ฆ่าเสีย 50 แต้ม)</strong>
+                                    </div>
+                                    <div class="cost-legend-item">
+                                        <span>กระบวนการ P2:</span>
+                                        <strong>ความสำคัญต่ำ (ฆ่าเสีย 10 แต้ม)</strong>
+                                    </div>
+                                    <div class="cost-legend-item">
+                                        <span>กระบวนการ P3:</span>
+                                        <strong>ความสำคัญปานกลาง (ฆ่าเสีย 25 แต้ม)</strong>
+                                    </div>
+                                </div>
+                                <button class="btn btn-danger" id="btnL1Kill" style="margin-top: auto; display: none;">ยืนยันการทำลายกระบวนการ</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Level 2 Panel (Banker's Algorithm) -->
+                    <div class="game-level-view" id="lvl-2-view" style="display: none;">
+                        <div style="margin-bottom: 1.25rem;">
+                            <strong style="color: var(--primary);">ภารกิจ:</strong> คุณคือระบบปฏิบัติการที่ดูแลทรัพยากรเครื่อง มีทรัพยากรว่างใช้งาน **(Available)** เหลือจำกัด มีกระบวนการต่าง ๆ กำลังรันอยู่และขอโควตาเพิ่ม หน้าที่ของคุณคือตรวจสอบและตัดสินใจว่าจะ **อนุมัติ (Approve)** หรือ **ปฏิเสธ (Deny)** คำร้องขอ โดยต้องระวังไม่ให้ระบบกลายเป็น **"สถานะไม่ปลอดภัย (Unsafe State)"** ที่จะทำให้เกิดเดดล็อกขึ้นในอนาคต!
+                        </div>
+                        
+                        <div class="l2-layout">
+                            <!-- System State Table -->
+                            <div class="banker-system-state">
+                                <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--primary);">ตารางสถานะการจองทรัพยากรระบบ</h4>
+                                <div class="resource-vector">
+                                    <div class="vector-box">
+                                        <div>ว่างใช้งาน (Available)</div>
+                                        <div class="num" id="l2-avail">A: 2 | B: 1</div>
+                                    </div>
+                                </div>
+                                <table class="banker-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ชื่อบิลด์</th>
+                                            <th>ใช้จัดสรรปัจจุบัน</th>
+                                            <th>ความต้องการสูงสุด</th>
+                                            <th>ยังต้องการอีก (Need)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="l2-table-body">
+                                        <!-- Dynamic Table Rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Decision Panel -->
+                            <div class="banker-decision-box">
+                                <div class="request-alert">
+                                    <div class="process-name" id="l2-req-proc">Process P1</div>
+                                    <div>ร้องขอทรัพยากรเพิ่มเป็นพิเศษ:</div>
+                                    <div class="request-details" id="l2-req-details">A: 1, B: 0</div>
+                                </div>
+                                <div class="decision-actions">
+                                    <button class="btn btn-primary" id="btnL2Approve" style="background-color: var(--accent-green); min-width: 110px;">อนุมัติ (Approve)</button>
+                                    <button class="btn btn-danger" id="btnL2Deny" style="min-width: 110px;">ปฏิเสธ (Deny)</button>
+                                </div>
+                                <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem;">
+                                    * เคล็ดลับ: คำขอนั้นขอเกินค่าความจำเป็นสูงสุด หรือเกินค่าที่ Available หรือไม่? และถ้าอนุมัติไปแล้ว ทรัพยากรที่เหลือจะสามารถคืนหนี้ให้กระบวนการใดจบงานได้บ้าง?
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Level 3 Panel (Dining Philosophers) -->
+                    <div class="game-level-view" id="lvl-3-view" style="display: none;">
+                        <div style="margin-bottom: 1rem;">
+                            <strong style="color: var(--primary);">ภารกิจ:</strong> นักปราชญ์ 5 ท่านนั่งกินข้าวกลมร่วมกัน แต่ละท่านต้องมี **ตะเกียบ 2 อัน (ซ้ายและขวา)** ถึงจะตักอาหารทานได้ และเมื่อทานเสร็จจึงจะยอมวางตะเกียบลง หากทุกคนตื่นขึ้นมาแล้วหยิบตะเกียบซ้ายมือตนเองพร้อมกัน ระบบจะเกิดเดดล็อกและทุกคนจะหิวโซจนตาย! 
+                            <br>จงเลือก **กลยุทธ์ตารางเวลาจัดสรรตะเกียบ** เพื่อช่วยพานักปราชญ์กินข้าวครบตามเป้าหมาย (สะสมแต้มอิ่มท้องรวม 10 มื้อ)
+                        </div>
+                        
+                        <div class="l3-layout">
+                            <!-- Round Table Simulation Graph -->
+                            <div class="table-simulation" id="l3-table-simulation">
+                                <div class="dining-table-circle">
+                                    <span>โต๊ะอาหารปราชญ์</span>
+                                    <!-- Philosophers & Chopsticks will be absolute positioned here -->
+                                </div>
+                            </div>
+                            
+                            <!-- Strategy Controls -->
+                            <div class="philosopher-controls">
+                                <div class="rule-select-card">
+                                    <h4 style="font-size: 0.95rem; margin-bottom: 0.5rem; color: var(--primary);">เลือกนโยบายตะเกียบ (Chopstick Policy)</h4>
+                                    <select id="l3-policy-select" style="margin-bottom: 0.75rem;">
+                                        <option value="none">นโยบายเสรี (ไม่จำกัด - เกิด Deadlock ง่าย)</option>
+                                        <option value="ordering">นโยบายเรียงลำดับดัชนี (Resource Ordering)</option>
+                                        <option value="limit">นโยบายควบคุมจำนวนคนนั่ง (Diner Limiter)</option>
+                                        <option value="evenodd">นโยบายคู่-คี่สลับข้าง (Even/Odd Alternating)</option>
+                                    </select>
+                                    <div style="display: flex; gap: 0.5rem;">
+                                        <button class="btn btn-primary" id="btnL3Start" style="flex-grow: 1;">เริ่มการจำลอง</button>
+                                        <button class="btn btn-outline" id="btnL3Reset" disabled>รีเซ็ตโต๊ะ</button>
+                                    </div>
+                                </div>
+                                <div class="stat-box" style="display: block; font-size: 0.85rem; padding: 0.75rem;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.25rem;">
+                                        <span>มื้อที่ทานสำเร็จ:</span>
+                                        <strong id="l3-meals-count">0 / 10</strong>
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span>สถานะโต๊ะอาหาร:</span>
+                                        <strong id="l3-status-txt" style="color: var(--accent-green);">ยังไม่ได้เริ่ม</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modal Popup Overlay for Game Events -->
+                    <div class="game-modal-overlay" id="gameModal">
+                        <div class="game-modal">
+                            <div class="modal-icon" id="modalIcon">🎉</div>
+                            <h3 id="modalTitle">ผลลัพธ์ด่าน</h3>
+                            <p id="modalBody">ยินดีด้วยคุณทำภารกิจสำเร็จ!</p>
+                            <button class="btn btn-primary" id="btnModalNext" style="width: 100%;">ดำเนินการต่อไป</button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>© 2026 เว็บไซต์สื่อการสอนวิทยาการคำนวณและระบบปฏิบัติการ เรื่อง วงจรอับ (Deadlock)</p>
+        <p style="margin-top: 0.5rem; font-size: 0.8rem;">ออกแบบด้วยธีมสีอบอุ่น Cozy Cozy สบายตาเพื่อการเรียนรู้ที่มีความสุข</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
